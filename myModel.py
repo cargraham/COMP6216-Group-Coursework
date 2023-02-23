@@ -12,13 +12,5 @@ system = np.where(system <= 0.6, 1, 0)
 
 print(system)
 
-# for x in range(width):
-#     for y in range(height):
-#         if(rand_system[x][y] < tree_prob):
-#             system[x][y] = 1
-        
-
-#print(system)
-
-# np.savetxt('system.txt', system)
+np.savetxt('system.txt', system, fmt='%.1i')
         
