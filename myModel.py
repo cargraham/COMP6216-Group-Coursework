@@ -5,10 +5,13 @@ import math
 
 width, height = 100, 100
 tree_prob = 0.6
-settle_prob = 0.5
-neighbours_prob = 0.1
+settle_prob = 0.6
 settle_num = 5
-neighbours = [(-1, -1), (0, -1), (1, -1), (-1, 0), (1, 0), (-1, 1), (0, 1), (1, 1)]
+neighbours = [(-2, -2), (-1, -2), (0, -2), (1, -2), (2, -2),
+              (-2, -1), (-1, -1), (0, -1), (1, -1), (2, -1),
+              (-2, 0), (-1, 0), (1, 0), (2, 0),
+              (-2, 1), (-1, 1), (0, 1), (1, 1), (2, 1),
+              (-2, 2), (-1, 2), (0, 2), (1, 2), (2, 2)]
 
 EMPTY, TREE, SETTLE, FIRE, BREAK,  = 0, 1, 2, 3, 4
 
@@ -29,8 +32,6 @@ def settle_neighbours(x, y):
         if((neigh_x >= 0 and neigh_x < width) and (neigh_y >= 0 and neigh_y < height)):
             if(np.random.random() <= settle_prob):
                 system[neigh_x][neigh_y] = SETTLE
-            if(np.random.random() <= neighbours_prob):
-                settle_neighbours(neigh_x, neigh_y)
 
 # generate settlements
 for settle in range(settle_num):
