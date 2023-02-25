@@ -2,23 +2,16 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import random
+from config import *
 
-SEED_VAL = 1
-WIDTH, HEIGHT = 100, 100
-TREE_PROB = 0.6
-NUM_SETTLEMENTS = 5
-MIN_SETTLE_SIZE = 5
-MAX_SETTLE_SIZE = 10
-FIRE_SPREAD_PROBS = [0.6, 0.3, 0.1]
-
-EMPTY, TREE, SETTLE, FIRE, BREAK = 0, 1, 2, 3, 4
-
-colours = ['white', 'green', 'black', 'red']
+colours = ['white', 'green', 'black', 'red', 'purple']
 cmap = colors.ListedColormap(colours)
 
 np.random.seed(SEED_VAL)
 system = np.random.random([WIDTH, HEIGHT])
 system = np.where(system <= TREE_PROB, TREE, EMPTY)
+burn_time = np.zeros((WIDTH, HEIGHT))
+burn_time[system == TREE] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME, size=np.count_nonzero(system == TREE))
 
 def make_settlements(system, num, min_size, max_size):
     for i in range(num):
@@ -52,13 +45,23 @@ def spread_fire(system):
                                 if system[x, y] == TREE and new_system[x, y] != FIRE:
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
-    return new_system
+                                        burn_time[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                elif system[x, y] == BURNT:
+                                    new_system[x, y] = BURNT
+                                elif system[x, y] == FIRE:
+                                    burn_time[x, y] -= 1
+                                    if burn_time[x, y] <= 0:
+                                        new_system[x, y] = BURNT
+                                else:
+                                    new_system[x, y] = system[x, y]
 
+    return new_system
 
 
 make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
 start_fire(system)
-while(np.any(system == TREE)):
+
+while np.any(system == FIRE):
     system = spread_fire(system)
     plt.imshow(system, cmap=cmap)
     plt.pause(0.001)
