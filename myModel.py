@@ -9,10 +9,11 @@ TREE_PROB = 0.6
 NUM_SETTLEMENTS = 5
 MIN_SETTLE_SIZE = 5
 MAX_SETTLE_SIZE = 10
+FIRE_SPREAD_PROBS = [0.6, 0.3, 0.1]
 
 EMPTY, TREE, SETTLE, FIRE, BREAK = 0, 1, 2, 3, 4
 
-colours = ['white', 'green', 'brown']
+colours = ['white', 'green', 'black', 'red']
 cmap = colors.ListedColormap(colours)
 
 np.random.seed(SEED_VAL)
@@ -33,9 +34,32 @@ def make_settlements(system, num, min_size, max_size):
         x2, y2 = center[0] + shape_size//2, center[1] + shape_size//2
         system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
+def start_fire(system):
+    trees = np.argwhere(system == TREE)
+    initial = trees[random.randint(0, trees.shape[0]-1)]
+    system[initial[0], initial[1]] = FIRE
+
+def spread_fire(system):
+    new_system = np.copy(system)
+
+    for i in range(WIDTH):
+        for j in range(HEIGHT):
+            if system[i, j] == FIRE:
+                for d in range(3):
+                    for x in range(i-d, i+d+1):
+                        for y in range(j-d, j+d+1):
+                            if x >= 0 and x < WIDTH and y >= 0 and y < HEIGHT:
+                                if system[x, y] == TREE and new_system[x, y] != FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = FIRE
+    return new_system
+
+
+
 make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
-
-plt.imshow(system, cmap=cmap)
+start_fire(system)
+while(np.any(system == TREE)):
+    system = spread_fire(system)
+    plt.imshow(system, cmap=cmap)
+    plt.pause(0.001)
 plt.show()
-
-np.savetxt('system.txt', system, fmt='%.1i')
