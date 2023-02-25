@@ -4,15 +4,17 @@ from matplotlib import colors
 import random
 from config import *
 
-colours = ['white', 'green', 'black', 'red', 'purple']
-cmap = colors.ListedColormap(colours)
 
-np.random.seed(SEED_VAL)
-system = np.random.random([WIDTH, HEIGHT])
-system = np.where(system <= TREE_PROB, TREE, EMPTY)
-burn_time = np.zeros((WIDTH, HEIGHT))
-burn_time[system == TREE] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME, size=np.count_nonzero(system == TREE))
+# Initialise the system
+def initialise():
+    np.random.seed(SEED_VAL)
+    system = np.random.random([WIDTH, HEIGHT])
+    system = np.where(system <= TREE_PROB, TREE, EMPTY)
+    burn_time = np.zeros((WIDTH, HEIGHT))
+    
+    return system, burn_time
 
+# Create random clusters of settlements
 def make_settlements(system, num, min_size, max_size):
     for i in range(num):
         random.seed(SEED_VAL + i+1)
@@ -27,30 +29,42 @@ def make_settlements(system, num, min_size, max_size):
         x2, y2 = center[0] + shape_size//2, center[1] + shape_size//2
         system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
-def start_fire(system):
+    return system
+
+# Pick a random starting point for the fire
+def start_fire(system, burn_times):
     trees = np.argwhere(system == TREE)
     initial = trees[random.randint(0, trees.shape[0]-1)]
     system[initial[0], initial[1]] = FIRE
+    burn_times[initial[0], initial[1]] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
 
-def spread_fire(system):
+    return system, burn_times
+
+# Simulate the spread of the fire
+# Iterate through each cell in the system which is on fire
+# Iterate through each neighbouring cell with increasing distance
+# If the cell is within the bounds of the system, and is a tree which is not on fire:
+#   Set the cells state to FIRE from a random chance, given the probability distance
+#   Give the burning tree a random burn time
+# If the cell is on fire, decrease the burn time by 1. If the new burn time is now < 0, set the state of the cell to BURNT
+# Otherwise, keep the cell the same as it was
+def spread_fire(system, burn_times):
     new_system = np.copy(system)
 
     for i in range(WIDTH):
         for j in range(HEIGHT):
             if system[i, j] == FIRE:
-                for d in range(3):
+                for d in range(len(FIRE_SPREAD_PROBS)):
                     for x in range(i-d, i+d+1):
                         for y in range(j-d, j+d+1):
                             if x >= 0 and x < WIDTH and y >= 0 and y < HEIGHT:
                                 if system[x, y] == TREE and new_system[x, y] != FIRE:
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
-                                        burn_time[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
-                                elif system[x, y] == BURNT:
-                                    new_system[x, y] = BURNT
+                                        burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
                                 elif system[x, y] == FIRE:
-                                    burn_time[x, y] -= 1
-                                    if burn_time[x, y] <= 0:
+                                    burn_times[x, y] -= 1
+                                    if burn_times[x, y] <= 0:
                                         new_system[x, y] = BURNT
                                 else:
                                     new_system[x, y] = system[x, y]
@@ -58,11 +72,15 @@ def spread_fire(system):
     return new_system
 
 
-make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
-start_fire(system)
+# Begin simulation
+system, burn_time = initialise()
+system = make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
+system, burn_time = start_fire(system, burn_time)
 
+cmap = colors.ListedColormap(COLORS)
+# Continue execution until all fires have burnt
 while np.any(system == FIRE):
-    system = spread_fire(system)
+    system = spread_fire(system, burn_time)
     plt.imshow(system, cmap=cmap)
     plt.pause(0.001)
 plt.show()
