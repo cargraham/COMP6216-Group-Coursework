@@ -31,6 +31,10 @@ def make_settlements(system, num, min_size, max_size):
 
     return system
 
+def make_firebreaks(system):
+    print()
+
+
 # Pick a random starting point for the fire
 def start_fire(system, burn_times):
     trees = np.argwhere(system == TREE)
@@ -62,14 +66,51 @@ def spread_fire(system, burn_times):
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
                                         burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                elif system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = SETTLE_FIRE
+                                        burn_times[x, y] = 3
                                 elif system[x, y] == FIRE:
                                     burn_times[x, y] -= 1
                                     if burn_times[x, y] <= 0:
                                         new_system[x, y] = BURNT
                                 else:
                                     new_system[x, y] = system[x, y]
+            if system[i, j] == SETTLE_FIRE:
+                for d in range(len(FIRE_SPREAD_PROBS)):
+                    for x in range(i-d, i+d+1):
+                        for y in range(j-d, j+d+1):
+                            if x >= 0 and x < WIDTH and y >= 0 and y < HEIGHT:
+                                if system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = SETTLE_FIRE
+                                        burn_times[x, y] = 3
+                                elif system[x, y] == TREE and new_system[x, y] != FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = FIRE
+                                        burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                elif system[x, y] == SETTLE_FIRE:
+                                    burn_times[x, y] -= 1
+                                    if burn_times[x, y] <= 0:
+                                        new_system[x, y] = SETTLE_BURNT
+                                else: new_system[x, y] = system[x, y]
 
     return new_system
+
+def perc_burnt(system):
+    burnt = len(np.argwhere(system == BURNT))
+    trees = len(np.argwhere(system == TREE))
+
+    settlement = len(np.argwhere(system == SETTLE))
+    burnt_settle = len(np.argwhere(system == SETTLE_BURNT))
+
+    print('Burnt trees: ', burnt)
+    print('Alive trees: ', trees)
+    print(f"Percentage burnt: {burnt / (burnt + trees): .2%}")
+
+    print('\n\nBurnt settlements: ', burnt_settle)
+    print('Standing settlements: ', settlement)
+    print(f"Percentage burnt: {burnt_settle / (burnt_settle + settlement): .2%}")
 
 
 # Begin simulation
@@ -78,9 +119,12 @@ system = make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_S
 system, burn_time = start_fire(system, burn_time)
 
 cmap = colors.ListedColormap(COLORS)
-# Continue execution until all fires have burnt
+#Continue execution until all fires have burnt
 while np.any(system == FIRE):
     system = spread_fire(system, burn_time)
     plt.imshow(system, cmap=cmap)
-    plt.pause(0.001)
+    plt.pause(0.000001)
+    break
+
+perc_burnt(system)
 plt.show()
