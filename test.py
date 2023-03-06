@@ -43,7 +43,6 @@ def make_settlements(system, num, min_size, max_size):
         system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
         system = make_break(system, center[0], center[1], size+2)
-        system = make_break(system, center[0], center[1], size+1)
 
     return system
 
@@ -83,10 +82,6 @@ def spread_fire(system, burn_times):
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = SETTLE_FIRE
                                         burn_times[x, y] = 3
-                                elif system[x, y] == FIRE:
-                                    burn_times[x, y] -= 1
-                                    if burn_times[x, y] <= 0:
-                                        new_system[x, y] = BURNT
                                 else:
                                     new_system[x, y] = system[x, y]
             if system[i, j] == SETTLE_FIRE:
@@ -102,13 +97,17 @@ def spread_fire(system, burn_times):
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
                                         burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
-                                elif system[x, y] == SETTLE_FIRE:
-                                    burn_times[x, y] -= 1
-                                    if burn_times[x, y] <= 0:
-                                        new_system[x, y] = SETTLE_BURNT
                                 else: new_system[x, y] = system[x, y]
 
-    return new_system
+    burn_times[burn_times > 0] -= 1
+    burn = (system == FIRE) & (burn_times <= 0)
+    new_system[burn] = BURNT
+    burn_times[burn] = 0
+    settle_burn = (system == SETTLE_FIRE) & (burn_times <= 0)
+    new_system[settle_burn] = SETTLE_BURNT
+    burn_times[settle_burn] = 0
+
+    return new_system, burn_times
 
 def perc_burnt(system):
     burnt = len(np.argwhere(system == BURNT))
@@ -134,7 +133,7 @@ system, burn_time = start_fire(system, burn_time)
 cmap = colors.ListedColormap(COLORS)
 #Continue execution until all fires have burnt
 while np.any(system == FIRE):
-    system = spread_fire(system, burn_time)
+    system, burn_time = spread_fire(system, burn_time)
     plt.imshow(system, cmap=cmap)
     plt.pause(0.000001)
     #break

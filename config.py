@@ -8,8 +8,8 @@ FIRE_SPREAD_PROBS = [0.8, 0.5, 0.2]     # Probability that a fire will spread to
 MIN_BURN_TIME = 3       # Minimum time a tree should burn for
 MAX_BURN_TIME = 8       # Maximum time a tree should burn for 
 
-EMPTY, TREE, SETTLE, FIRE, BURNT, SETTLE_FIRE, SETTLE_BURNT, FIRE_BREAK = 0, 1, 2, 3, 4, 5, 6, 7    # Values corresponding to each state
-COLORS = ['white', 'green', 'purple', 'red', 'black', 'red', 'gray', 'blue']   # Color for each state
+EMPTY, TREE, FIRE, BURNT, SETTLE, SETTLE_FIRE, SETTLE_BURNT, FIRE_BREAK = 0, 1, 2, 3, 4, 5, 6, 7    # Values corresponding to each state
+COLORS = ['white', 'green', 'red', 'black', 'purple', 'red', 'gray', 'blue']   # Color for each state
 
 
 # Watering:
