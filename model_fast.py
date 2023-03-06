@@ -5,6 +5,16 @@ import random
 from config import *
 import math
 
+
+# Initialise the system
+def initialise():
+    np.random.seed(SEED_VAL)
+    system = np.random.random([WIDTH, HEIGHT])
+    system = np.where(system <= TREE_PROB, TREE, EMPTY)
+    burn_time = np.zeros((WIDTH, HEIGHT))
+    
+    return system, burn_time
+
 def make_break(system, x, y, z):
     x_min, y_min = max(0, x-z), max(0, y-z)
     x_max, y_max = min(len(system[0]-1), x+z), min(len(system)-1, y+z)
@@ -33,19 +43,9 @@ def make_settlements(system, num, min_size, max_size):
         system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
         system = make_break(system, center[0], center[1], size+2)
-        system = make_break(system, center[0], center[1], size+1)
 
     return system
 
-# Initialise the system
-def initialise():
-    np.random.seed(SEED_VAL)
-    system = np.random.random([WIDTH, HEIGHT])
-    system = np.where(system <= TREE_PROB, TREE, EMPTY)
-    system = make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
-    burn_time = np.zeros((WIDTH, HEIGHT))
-    
-    return system, burn_time
 
 # Pick a random starting point for the fire
 def start_fire(system, burn_times):
@@ -64,34 +64,53 @@ def start_fire(system, burn_times):
 #   Give the burning tree a random burn time
 # If the cell is on fire, decrease the burn time by 1. If the new burn time is now < 0, set the state of the cell to BURNT
 # Otherwise, keep the cell the same as it was
-from scipy.signal import convolve2d
-
 def spread_fire(system, burn_times):
     new_system = np.copy(system)
 
-    for d in range(len(FIRE_SPREAD_PROBS)):
-        # Use numpy's built-in convolution function to calculate the spread of fire
-        kernel = np.ones((2 * d + 1, 2 * d + 1), dtype=bool)
-        kernel[d, d] = False
-        spreading = (system == FIRE) & (burn_times > 0)
-        new_spreading = np.logical_or(spreading, np.logical_and(system == SETTLE_FIRE, burn_times > 0))
-        new_spreading = np.logical_or(new_spreading, np.logical_and(system == SETTLE, spreading))
-        new_spreading = np.logical_or(new_spreading, (system == TREE) & spreading & (np.random.random(size=system.shape) < FIRE_SPREAD_PROBS[d]))
-        padded_spreading = np.pad(new_spreading.astype(int), ((d, d), (d, d)), mode="edge")
-        spread = (convolve2d(padded_spreading, kernel, mode='valid') == 0)
-        new_system[spread] = FIRE
-        burn_times[spread] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME, size=np.sum(spread))
+    # Iterate through all cells on fire
+    for i in range(WIDTH):
+        for j in range(HEIGHT):
+            if system[i, j] == FIRE:
+                for d in range(len(FIRE_SPREAD_PROBS)):
+                    x_range = range(max(0, i-d), min(WIDTH, i+d+1))
+                    y_range = range(max(0, j-d), min(HEIGHT, j+d+1))
+                    for x in x_range:
+                        for y in y_range:
+                            if system[x, y] == TREE and new_system[x, y] != FIRE:
+                                if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                    new_system[x, y] = FIRE
+                                    burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                            elif system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
+                                if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                    new_system[x, y] = SETTLE_FIRE
+                                    burn_times[x, y] = 3
+                            else:
+                                new_system[x, y] = system[x, y]
+            elif system[i, j] == SETTLE_FIRE:
+                for d in range(len(FIRE_SPREAD_PROBS)):
+                    x_range = range(max(0, i-d), min(WIDTH, i+d+1))
+                    y_range = range(max(0, j-d), min(HEIGHT, j+d+1))
+                    for x in x_range:
+                        for y in y_range:
+                                if system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = SETTLE_FIRE
+                                        burn_times[x, y] = 3
+                                elif system[x, y] == TREE and new_system[x, y] != FIRE:
+                                    if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                                        new_system[x, y] = FIRE
+                                        burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                else: new_system[x, y] = system[x, y]
 
-    # Burn down trees and settlements
+    burn_times[burn_times > 0] -= 1
     burn = (system == FIRE) & (burn_times <= 0)
     new_system[burn] = BURNT
     burn_times[burn] = 0
     settle_burn = (system == SETTLE_FIRE) & (burn_times <= 0)
-    new_system[settle_burn] = BURNT
+    new_system[settle_burn] = SETTLE_BURNT
     burn_times[settle_burn] = 0
 
     return new_system, burn_times
-
 
 def perc_burnt(system):
     burnt = len(np.argwhere(system == BURNT))
@@ -111,6 +130,7 @@ def perc_burnt(system):
 
 # Begin simulation
 system, burn_time = initialise()
+system = make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
 system, burn_time = start_fire(system, burn_time)
 
 cmap = colors.ListedColormap(COLORS)
