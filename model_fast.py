@@ -72,8 +72,8 @@ def spread_fire(system, biomasses):
         for j in range(HEIGHT):
             if system[i, j] == FIRE:
                 for d in range(len(FIRE_SPREAD_PROBS)):
-                    x_range = range(max(0, i-d), min(WIDTH, i+d+1))
-                    y_range = range(max(0, j-d), min(HEIGHT, j+d+1))
+                    x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
+                    y_range = range(max(0, j-d-1), min(HEIGHT, j+d+2))
                     for x in x_range:
                         for y in y_range:
                             if system[x, y] == TREE and new_system[x, y] != FIRE:
@@ -88,8 +88,8 @@ def spread_fire(system, biomasses):
                                 new_system[x, y] = system[x, y]
             elif system[i, j] == SETTLE_FIRE:
                 for d in range(len(FIRE_SPREAD_PROBS)):
-                    x_range = range(max(0, i-d), min(WIDTH, i+d+1))
-                    y_range = range(max(0, j-d), min(HEIGHT, j+d+1))
+                    x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
+                    y_range = range(max(0, j-d-1), min(HEIGHT, j+d+2))
                     for x in x_range:
                         for y in y_range:
                                 if system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
