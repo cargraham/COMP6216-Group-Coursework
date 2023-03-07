@@ -71,12 +71,17 @@ def spread_fire(system, biomasses):
     for i in range(WIDTH):
         for j in range(HEIGHT):
             if system[i, j] == FIRE:
+                #print(f"Cell: {i}, {j}")
                 for d in range(len(FIRE_SPREAD_PROBS)):
+                    #print(f"d: {d}")
                     x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
+                    #print(f"x_range: {x_range}")
                     y_range = range(max(0, j-d-1), min(HEIGHT, j+d+2))
+                    #print(f"y_range: {y_range}")
                     for x in x_range:
                         for y in y_range:
                             if system[x, y] == TREE and new_system[x, y] != FIRE:
+                                #print(f"d: {d}. Prob: {FIRE_SPREAD_PROBS[d]}. Cell: {x}, {y}")
                                 if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                     new_system[x, y] = FIRE
                                     biomasses[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
@@ -84,8 +89,6 @@ def spread_fire(system, biomasses):
                                 if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                     new_system[x, y] = SETTLE_FIRE
                                     biomasses[x, y] = 3
-                            else:
-                                new_system[x, y] = system[x, y]
             elif system[i, j] == SETTLE_FIRE:
                 for d in range(len(FIRE_SPREAD_PROBS)):
                     x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
@@ -100,7 +103,6 @@ def spread_fire(system, biomasses):
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
                                         biomasses[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
-                                else: new_system[x, y] = system[x, y]
 
     biomasses[biomasses > 0] -= 1
     burn = (system == FIRE) & (biomasses <= 0)
