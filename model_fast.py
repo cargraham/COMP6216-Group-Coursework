@@ -143,5 +143,5 @@ while np.any(system == FIRE):
     plt.pause(0.000001)
     #break
 
-#perc_burnt(system)
+perc_burnt(system)
 plt.show()
