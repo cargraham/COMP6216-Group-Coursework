@@ -151,12 +151,16 @@ system, biomass = initialise()
 system = make_settlements(system, NUM_SETTLEMENTS, MIN_SETTLE_SIZE, MAX_SETTLE_SIZE)
 system, biomass = start_fire(system, biomass)
 
+
 cmap = colors.ListedColormap(COLORS)
-# Continue execution until all fires have burnt
+cmap.set_under('gray', alpha=0)
+
+bounds = [value-0.5 for value in VALUES] + [VALUES[-1]+0.5]
+norm = colors.BoundaryNorm(bounds, cmap.N)# Continue execution until all fires have burnt
 while np.any(system == FIRE):
     system = water_fires(system)
     system, biomass = spread_fire(system, biomass)
-    plt.imshow(system, cmap=cmap)
+    plt.imshow(system, cmap=cmap, norm=norm)
     plt.pause(0.00000001)
     #break
 
