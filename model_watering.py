@@ -14,6 +14,24 @@ def initialise():
 
     return system, biomass
 
+# def make_break(system, x, y, z):
+#     x_min, y_min = max(0, x-z), max(0, y-z)
+#     x_max, y_max = min(len(system[0]-1), x+z), min(len(system)-1, y+z)
+
+#     for i in range(x_min, x_max+1):
+#         for j in range(y_min, y_max+1):
+#             for w in range(FIREBREAK_WIDTH):
+#                 if (abs(i-x) == z-w or abs(j-y) == z-w) and i >= 0 and i < WIDTH and j >= 0 and j < HEIGHT:
+#                    system[i, j] = FIRE_BREAK
+
+#     return system
+
+def make_water_station(system, x, y, z):
+    system[x, y] = WATER_STATION
+    return system
+
+
+
 # Create random clusters of settlements
 def make_settlements(system, num, min_size, max_size):
     for i in range(num):
@@ -29,6 +47,8 @@ def make_settlements(system, num, min_size, max_size):
         x2, y2 = center[0] + shape_size//2, center[1] + shape_size//2
         system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
+        system = make_water_station(system, center[0], center[1], size+5)    
+
     return system
 
 
@@ -37,7 +57,7 @@ def start_fire(system, biomasses):
     trees = np.argwhere(system == TREE)
     initial = trees[random.randint(0, trees.shape[0]-1)]
     system[initial[0], initial[1]] = FIRE
-    biomasses[initial[0], initial[1]] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+    biomasses[initial[0], initial[1]] = np.random.randint(MIN_BIOMASS, MAX_BIOMASS)
 
     return system, biomasses
 
@@ -56,20 +76,19 @@ def spread_fire(system, biomasses):
 
     fires = np.argwhere(fire_bool)
     for i, j in fires:
-        if np.random.random() >= WATERING_PROB:
-            for d in range(len(FIRE_SPREAD_PROBS)):
-                x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
-                y_range = range(max(0, j-d-1), min(HEIGHT, j+d+2))
-                for x in x_range:
-                    for y in y_range:
-                        if system[x, y] == TREE and new_system[x, y] != FIRE:
-                            if np.random.random() <= FIRE_SPREAD_PROBS[d]:
-                                new_system[x, y] = FIRE
-                                biomasses[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
-                        elif system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
-                            if np.random.random() <= FIRE_SPREAD_PROBS[d]:
-                                new_system[x, y] = SETTLE_FIRE
-                                biomasses[x, y] = 3
+        for d in range(len(FIRE_SPREAD_PROBS)):
+            x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
+            y_range = range(max(0, j-d-1), min(HEIGHT, j+d+2))
+            for x in x_range:
+                for y in y_range:
+                    if system[x, y] == TREE and new_system[x, y] != FIRE:
+                        if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                            new_system[x, y] = FIRE
+                            biomasses[x, y] = np.random.randint(MIN_BIOMASS, MAX_BIOMASS)
+                    elif system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
+                        if np.random.random() <= FIRE_SPREAD_PROBS[d]:
+                            new_system[x, y] = SETTLE_FIRE
+                            biomasses[x, y] = 3
     
 
     biomasses[biomasses > 0] -= 1
@@ -82,20 +101,49 @@ def spread_fire(system, biomasses):
 
     return new_system, biomasses
 
+def water_station(system, new_system, i, j):
+    for d in range(1, STATION_RADIUS):
+        x_range = range(max(0, i-d-1), min(WIDTH, i+d+2))
+        y_range = range(max(0, j-d)-1, min(HEIGHT, j+d+2))
+
+        for x in x_range:
+            for y in y_range:
+                if system[x, y] == FIRE and new_system[x, y] != WET_TREE:
+                    new_system[x, y] = WET_TREE
+                    return new_system
+                elif system[x, y] == SETTLE_FIRE and new_system[x, y] != WET_SETTLE:
+                    new_system[x, y] = WET_SETTLE
+                    return new_system
+    return new_system
+
+def water_fires(system):
+    new_system = np.copy(system)
+
+    stations = np.argwhere(system == WATER_STATION)
+    for i, j in stations:
+        for _ in range(STATION_POWER):
+            new_system = water_station(system, new_system, i, j)
+
+    return new_system
+
 def perc_burnt(system):
     burnt = len(np.argwhere(system == BURNT))
     trees = len(np.argwhere(system == TREE))
+    wet_trees = len(np.argwhere(system == WET_TREE))
 
     settlement = len(np.argwhere(system == SETTLE))
     burnt_settle = len(np.argwhere(system == SETTLE_BURNT))
+    wet_settlement = len(np.argwhere(system == WET_SETTLE))
 
     print('Burnt trees: ', burnt)
     print('Alive trees: ', trees)
-    print(f"Percentage burnt: {burnt / (burnt + trees): .2%}")
+    print(f"Wet trees: {wet_trees}")
+    print(f"Percentage burnt: {burnt / (burnt + wet_trees + trees): .2%}")
 
     print('\n\nBurnt settlements: ', burnt_settle)
     print('Standing settlements: ', settlement)
-    print(f"Percentage burnt: {burnt_settle / (burnt_settle + settlement): .2%}")
+    print(f"Wet settlements: {wet_settlement}")
+    print(f"Percentage burnt: {burnt_settle / (burnt_settle + wet_settlement + settlement): .2%}")
 
 
 # Begin simulation
@@ -106,6 +154,7 @@ system, biomass = start_fire(system, biomass)
 cmap = colors.ListedColormap(COLORS)
 # Continue execution until all fires have burnt
 while np.any(system == FIRE):
+    system = water_fires(system)
     system, biomass = spread_fire(system, biomass)
     plt.imshow(system, cmap=cmap)
     plt.pause(0.00000001)
