@@ -8,6 +8,7 @@ FIRE_SPREAD_PROBS = [0.8, 0.05, 0.002]     # Probability that a fire will spread
 MIN_BURN_TIME = 1       # Minimum time a tree should burn for
 MAX_BURN_TIME = 8       # Maximum time a tree should burn for
 FIREBREAK_WIDTH = 2     # Width of the fire break
+WATERING_PROB = 0.4     # Probability that water puts out a cell on fire
 
 EMPTY, TREE, FIRE, BURNT, SETTLE, SETTLE_FIRE, SETTLE_BURNT, FIRE_BREAK = 0, 1, 2, 3, 4, 5, 6, 7    # Values corresponding to each state
 COLORS = ['white', 'green', 'red', 'black', 'purple', 'red', 'gray', 'blue']   # Color for each state
