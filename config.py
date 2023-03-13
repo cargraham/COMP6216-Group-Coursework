@@ -8,9 +8,8 @@ FIRE_SPREAD_PROBS = [0.8, 0.05, 0.002]     # Probability that a fire will spread
 MIN_BIOMASS = 1       # Minimum time a tree should burn for
 MAX_BIOMASS = 8       # Maximum time a tree should burn for
 FIREBREAK_WIDTH = 2     # Width of the fire break
-WATERING_PROB = 0.4     # Probability that water puts out a cell on fire
-STATION_RADIUS = 10
-STATION_POWER = 3
+STATION_RADIUS = 10     # Radius that water station can reach
+STATION_POWER = 4       # Number of trees that a water station can water each iteration
 
 VALUES = [0,1,2,3,4,5,6,7,8,9]
 EMPTY, TREE, SETTLE, WATER_STATION, FIRE, SETTLE_FIRE, BURNT, SETTLE_BURNT, WET_TREE, WET_SETTLE = VALUES

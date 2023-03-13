@@ -53,7 +53,7 @@ def start_fire(system, burn_times):
     trees = np.argwhere(system == TREE)
     initial = trees[random.randint(0, trees.shape[0]-1)]
     system[initial[0], initial[1]] = FIRE
-    burn_times[initial[0], initial[1]] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+    burn_times[initial[0], initial[1]] = np.random.randint(MIN_BIOMASS, MAX_BIOMASS)
 
     return system, burn_times
 
@@ -78,7 +78,7 @@ def spread_fire(system, burn_times):
                                 if system[x, y] == TREE and new_system[x, y] != FIRE:
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
-                                        burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                        burn_times[x, y] = np.random.randint(MIN_BIOMASS, MAX_BIOMASS)
                                 elif system[x, y] == SETTLE and new_system[x, y] != SETTLE_FIRE:
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = SETTLE_FIRE
@@ -101,7 +101,7 @@ def spread_fire(system, burn_times):
                                 elif system[x, y] == TREE and new_system[x, y] != FIRE:
                                     if np.random.random() <= FIRE_SPREAD_PROBS[d]:
                                         new_system[x, y] = FIRE
-                                        burn_times[x, y] = np.random.randint(MIN_BURN_TIME, MAX_BURN_TIME)
+                                        burn_times[x, y] = np.random.randint(MIN_BIOMASS, MAX_BIOMASS)
                                 elif system[x, y] == SETTLE_FIRE:
                                     burn_times[x, y] -= 1
                                     if burn_times[x, y] <= 0:
