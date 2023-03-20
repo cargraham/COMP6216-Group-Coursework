@@ -183,15 +183,13 @@ def prog(SEED_VAL, FIREBREAK_WIDTH):
         #plt.pause(0.00000001)
         #break
 
-    plt.imshow(system, cmap=cmap, norm=norm)
-    plt.show()
+    #plt.imshow(system, cmap=cmap, norm=norm)
+    #plt.show()
     return df
 
 
     #perc_burnt(system)
     #plt.show()
-
-prog(2)
 
 for width in range(1, 4):
     with pd.ExcelWriter(f"firebreak_results_{width}.xlsx") as writer:
