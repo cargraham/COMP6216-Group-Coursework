@@ -7,7 +7,7 @@ import pandas as pd
 import json
 
 
-def prog(SEED_VAL, STATION_RADIUS):
+def prog(SEED_VAL, FIREBREAK_WIDTH):
 
     # Initialise the system
     def initialise():
@@ -18,17 +18,17 @@ def prog(SEED_VAL, STATION_RADIUS):
 
         return system, biomass
 
-    # def make_break(system, x, y, z):
-    #     x_min, y_min = max(0, x-z), max(0, y-z)
-    #     x_max, y_max = min(len(system[0]-1), x+z), min(len(system)-1, y+z)
+    def make_break(system, x, y, z):
+        x_min, y_min = max(0, x-z), max(0, y-z)
+        x_max, y_max = min(len(system[0]-1), x+z), min(len(system)-1, y+z)
 
-    #     for i in range(x_min, x_max+1):
-    #         for j in range(y_min, y_max+1):
-    #             for w in range(FIREBREAK_WIDTH):
-    #                 if (abs(i-x) == z-w or abs(j-y) == z-w) and i >= 0 and i < WIDTH and j >= 0 and j < HEIGHT:
-    #                    system[i, j] = FIRE_BREAK
+        for i in range(x_min, x_max+1):
+            for j in range(y_min, y_max+1):
+                for w in range(FIREBREAK_WIDTH):
+                    if (abs(i-x) == z-w or abs(j-y) == z-w) and i >= 0 and i < WIDTH and j >= 0 and j < HEIGHT:
+                       system[i, j] = FIRE_BREAK
 
-    #     return system
+        return system
 
     def make_water_station(system, x, y, z):
         system[x, y] = WATER_STATION
@@ -51,7 +51,8 @@ def prog(SEED_VAL, STATION_RADIUS):
             x2, y2 = center[0] + shape_size//2, center[1] + shape_size//2
             system[x1:x2+1, y1:y2+1][shape==1] = SETTLE
 
-            system = make_water_station(system, center[0], center[1], size+5)    
+            #system = make_water_station(system, center[0], center[1], size+5)    
+            system = make_break(system, center[0], center[1], size+2)
 
         return system
 
@@ -182,15 +183,18 @@ def prog(SEED_VAL, STATION_RADIUS):
         #plt.pause(0.00000001)
         #break
 
+    plt.imshow(system, cmap=cmap, norm=norm)
+    plt.show()
     return df
 
-    #plt.imshow(system, cmap=cmap, norm=norm)
 
     #perc_burnt(system)
     #plt.show()
 
-for radius in range(1, 11):
-    with pd.ExcelWriter(f"station_radius_results_{radius}.xlsx") as writer:
+prog(2)
+
+for width in range(1, 4):
+    with pd.ExcelWriter(f"firebreak_results_{width}.xlsx") as writer:
         for seed in range(5):
-            df = prog(seed, radius)
-            df.to_excel(writer, sheet_name=(f"STATION_RADIUS_{seed}"))
+            df = prog(seed, width)
+            df.to_excel(writer, sheet_name=(f"FIREBREAK_{seed}"))
