@@ -7,7 +7,7 @@ import pandas as pd
 import json
 
 
-def prog(STATION_POWER):
+def prog(STATION_RADIUS):
 
     # Initialise the system
     def initialise():
@@ -190,7 +190,7 @@ def prog(STATION_POWER):
     #plt.show()
 
 
-with pd.ExcelWriter('results.xlsx') as writer:
-    for i in range(1, 5):
+with pd.ExcelWriter('station_radius_results.xlsx') as writer:
+    for i in range(1, 10):
         df = prog(i)
-        df.to_excel(writer, sheet_name=(f"STATION_POWER_{i}"))
+        df.to_excel(writer, sheet_name=(f"STATION_RADIUS_{i}"))
