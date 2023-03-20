@@ -7,7 +7,7 @@ import pandas as pd
 import json
 
 
-def prog(SEED_VAL, STATION_RADIUS):
+def prog(SEED_VAL, STATION_POWER):
 
     # Initialise the system
     def initialise():
@@ -189,8 +189,8 @@ def prog(SEED_VAL, STATION_RADIUS):
     #perc_burnt(system)
     #plt.show()
 
-for radius in range(1, 11):
-    with pd.ExcelWriter(f"station_radius_results_{radius}.xlsx") as writer:
+for radius in range(1, 6):
+    with pd.ExcelWriter(f"station_power_results_{radius}.xlsx") as writer:
         for seed in range(5):
             df = prog(seed, radius)
-            df.to_excel(writer, sheet_name=(f"STATION_RADIUS_{seed}"))
+            df.to_excel(writer, sheet_name=(f"STATION_POWER_{seed}"))
